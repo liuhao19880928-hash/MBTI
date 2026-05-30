@@ -476,9 +476,10 @@ body {
 <script>
 // ==================== SUPABASE CONFIG ====================
 // TODO: 替换为你的 Supabase 项目 URL 和 anon key
-const SUPABASE_URL = 'https://guhotxwcwijjhfuwmsbz.supabase.co/rest/v1/';
+// URL 格式：https://xxxxx.supabase.co（不要带 /rest/v1 等后缀）
+const SUPABASE_URL = 'https://guhotxwcwijjhfuwmsbz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_n7_tjGb7ZSjqZR8Epf31tA_2gZMIN2c';
-let supabase = null;
+let sbClient = null;
 
 function initSupabase() {
   if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
@@ -486,7 +487,8 @@ function initSupabase() {
     return false;
   }
   try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // 注意：全局 supabase 对象由 CDN 脚本声明，此处不能再用 let/const/var 声明 supabase
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     return true;
   } catch (e) {
     console.error('Supabase 初始化失败:', e);
@@ -1112,20 +1114,33 @@ document.getElementById('comment-input').addEventListener('keydown', (e) => {
 
 // ==================== INIT ====================
 function init() {
-  initSupabase();
+  try {
+    initSupabase();
+  } catch(e) {
+    console.warn('Supabase 初始化失败（不影响答题）:', e);
+  }
   renderCover();
 
   // Check if user already has a result (coming back)
   if (loadSavedResult()) {
-    const soul = SOUL_TYPES[userResultType - 1];
-    document.getElementById('result-emoji').textContent = soul.emoji;
-    document.getElementById('result-type').textContent = '你的打工魂：' + soul.name;
-    document.getElementById('result-desc').textContent = soul.desc;
-    document.getElementById('result-tags').innerHTML = soul.tags.map(t => '<span class="result-tag">#' + t + '</span>').join('');
+    try {
+      const soul = SOUL_TYPES[userResultType - 1];
+      document.getElementById('result-emoji').textContent = soul.emoji;
+      document.getElementById('result-type').textContent = '你的打工魂：' + soul.name;
+      document.getElementById('result-desc').textContent = soul.desc;
+      document.getElementById('result-tags').innerHTML = soul.tags.map(t => '<span class="result-tag">#' + t + '</span>').join('');
+    } catch(e) {
+      console.warn('恢复结果失败:', e);
+    }
   }
 }
 
-init();
+// 确保 DOM 就绪后初始化
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 </script>
 </body>
 </html>
