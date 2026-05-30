@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>测测你的打工魂</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --orange: #FF6B35;
+  --orange-deep: #E55A2B;
+  --yellow: #FFD23F;
+  --warm-bg: #FFF8F0;
+  --cream: #FFF1E0;
+  --text: #2D2420;
+  --text-light: #7A6E66;
+  --card-bg: #FFFFFF;
+  --shadow-sm: 0 2px 8px rgba(45,36,32,0.06);
+  --shadow-md: 0 4px 16px rgba(45,36,32,0.10);
+  --shadow-lg: 0 8px 32px rgba(45,36,32,0.14);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--warm-bg);
+  color: var(--text);
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  background: var(--warm-bg);
+}
+
+.page {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; min-height: 100dvh;
+  padding: 32px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.4,0,0.2,1), transform 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+.page.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  position: relative;
+}
+
+/* ===== COVER PAGE ===== */
+.cover-page { align-items: center; justify-content: center; text-align: center; gap: 24px; }
+.cover-emoji-group {
+  font-size: 72px;
+  line-height: 1;
+  animation: coverBounce 2s ease-in-out infinite;
+  filter: drop-shadow(0 4px 12px rgba(255,107,53,0.25));
+}
+@keyframes coverBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+.cover-title {
+  font-size: clamp(2rem, 8vw, 2.5rem);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, var(--orange-deep), var(--orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.cover-subtitle {
+  font-size: 1rem;
+  color: var(--text-light);
+  letter-spacing: 0.04em;
+}
+.cover-participants {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--card-bg);
+  padding: 10px 20px;
+  border-radius: 50px;
+  box-shadow: var(--shadow-sm);
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+.cover-participants .count {
+  font-weight: 700;
+  color: var(--orange);
+  font-size: 1.15rem;
+}
+.btn-start {
+  background: linear-gradient(135deg, var(--orange), var(--orange-deep));
+  color: #fff;
+  border: none;
+  padding: 16px 56px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(255,107,53,0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  letter-spacing: 0.06em;
+}
+.btn-start:active { transform: scale(0.96); box-shadow: 0 3px 12px rgba(255,107,53,0.3); }
+
+/* ===== QUIZ PAGE ===== */
+.quiz-page { gap: 20px; }
+.progress-wrap {
+  display: flex; align-items: center; gap: 10px;
+}
+.progress-bar {
+  flex: 1; height: 8px;
+  background: var(--cream);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--orange), var(--yellow));
+  border-radius: 10px;
+  transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+.progress-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--orange);
+  min-width: 36px;
+  text-align: right;
+}
+.quiz-emoji {
+  text-align: center;
+  font-size: 56px;
+  line-height: 1;
+  margin: 8px 0 4px;
+}
+.quiz-question {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--text);
+}
+.quiz-options { display: flex; flex-direction: column; gap: 10px; }
+.quiz-option {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card-bg);
+  border: 2px solid transparent;
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.quiz-option:active { transform: scale(0.98); }
+.quiz-option.selected {
+  border-color: var(--orange);
+  background: #FFF5EE;
+}
+.quiz-option-letter {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--cream);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--orange);
+  flex-shrink: 0;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.quiz-option.selected .quiz-option-letter {
+  background: var(--orange);
+  color: #fff;
+}
+
+/* ===== RESULT PAGE ===== */
+.result-page { align-items: center; text-align: center; gap: 16px; }
+.result-emoji {
+  font-size: 80px;
+  line-height: 1;
+  animation: resultPop 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes resultPop {
+  0% { transform: scale(0.3); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.result-type {
+  font-size: clamp(1.6rem, 7vw, 2rem);
+  font-weight: 900;
+  color: var(--text);
+}
+.result-desc {
+  font-size: 1rem;
+  color: var(--text-light);
+  max-width: 320px;
+  line-height: 1.7;
+}
+.result-tags {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+}
+.result-tag {
+  background: var(--cream);
+  color: var(--orange-deep);
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.result-actions {
+  display: flex; flex-direction: column; gap: 10px;
+  width: 100%; max-width: 280px;
+  margin-top: 8px;
+}
+.btn-action {
+  padding: 14px 0;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  letter-spacing: 0.04em;
+}
+.btn-action:active { transform: scale(0.96); }
+.btn-primary { background: linear-gradient(135deg, var(--orange), var(--orange-deep)); color: #fff; box-shadow: 0 4px 16px rgba(255,107,53,0.25); }
+.btn-secondary { background: var(--card-bg); color: var(--text); box-shadow: var(--shadow-sm); }
+.btn-outline { background: transparent; color: var(--orange); border: 2px solid var(--orange); }
+
+/* ===== RANKING PAGE ===== */
+.ranking-page { gap: 20px; }
+.ranking-title {
+  font-size: 1.4rem; font-weight: 900; text-align: center;
+}
+.ranking-subtitle { text-align: center; font-size: 0.9rem; color: var(--text-light); }
+.ranking-list { display: flex; flex-direction: column; gap: 6px; }
+.ranking-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.9rem;
+  transition: background 0.2s ease;
+}
+.ranking-item.is-you {
+  background: #FFF5EE;
+  box-shadow: 0 0 0 2px var(--orange);
+}
+.ranking-rank {
+  width: 28px; font-weight: 900; color: var(--text-light); flex-shrink: 0; text-align: center;
+}
+.ranking-emoji { font-size: 1.3rem; flex-shrink: 0; }
+.ranking-name { flex: 1; font-weight: 600; }
+.ranking-bar-wrap { flex: 1; height: 8px; background: var(--cream); border-radius: 10px; overflow: hidden; min-width: 60px; }
+.ranking-bar { height: 100%; background: linear-gradient(90deg, var(--orange), var(--yellow)); border-radius: 10px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+.ranking-pct { font-weight: 700; color: var(--orange); min-width: 44px; text-align: right; font-size: 0.85rem; }
+
+/* ===== COMMENT PAGE ===== */
+.comment-page { gap: 16px; }
+.comment-title { font-size: 1.4rem; font-weight: 900; text-align: center; }
+.comment-list { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.comment-item {
+  background: var(--card-bg);
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.9rem;
+}
+.comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.comment-nickname { font-weight: 700; font-size: 0.9rem; }
+.comment-type-tag {
+  font-size: 0.75rem; color: var(--orange); background: var(--cream);
+  padding: 2px 8px; border-radius: 50px; font-weight: 600;
+}
+.comment-body { color: var(--text-light); line-height: 1.5; }
+.comment-input-wrap {
+  display: flex; gap: 8px;
+  background: var(--card-bg);
+  padding: 8px;
+  border-radius: 50px;
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  bottom: 0;
+}
+.comment-input {
+  flex: 1; border: none; outline: none;
+  font-size: 0.95rem; padding: 8px 12px;
+  background: transparent; color: var(--text);
+  font-family: inherit;
+}
+.comment-input::placeholder { color: #C4B8AE; }
+.btn-comment {
+  background: var(--orange);
+  color: #fff; border: none;
+  padding: 10px 20px; border-radius: 50px;
+  font-weight: 700; font-size: 0.9rem;
+  cursor: pointer; flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.btn-comment:active { transform: scale(0.94); }
+.btn-comment:disabled { opacity: 0.5; pointer-events: none; }
+
+/* ===== BACK BUTTON ===== */
+.back-btn {
+  background: none; border: none;
+  font-size: 1.4rem; cursor: pointer;
+  align-self: flex-start; padding: 4px 8px;
+  color: var(--text-light);
+  transition: color 0.2s ease;
+}
+.back-btn:hover { color: var(--text); }
+
+/* ===== POSTER OVERLAY ===== */
+.poster-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+  padding: 20px;
+}
+.poster-overlay.show { opacity: 1; pointer-events: auto; }
+.poster-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  max-width: 340px;
+  width: 100%;
+}
+.poster-card canvas { width: 100%; border-radius: 12px; display: block; }
+.poster-actions { display: flex; gap: 10px; margin-top: 16px; }
+.poster-actions button {
+  flex: 1; padding: 12px 0; border-radius: 50px;
+  font-weight: 700; font-size: 0.9rem; cursor: pointer; border: none;
+  transition: transform 0.15s ease;
+}
+.poster-actions button:active { transform: scale(0.95); }
+.poster-close { background: #f0f0f0; color: var(--text); }
+
+/* ===== EMPTY / LOADING STATES ===== */
+.empty-state {
+  text-align: center; padding: 40px 20px; color: var(--text-light);
+}
+.empty-emoji { font-size: 48px; margin-bottom: 12px; }
+.loading-dots {
+  display: flex; gap: 6px; justify-content: center; padding: 20px;
+}
+.loading-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--orange);
+  animation: dotBounce 1.4s ease-in-out infinite;
+}
+.loading-dot:nth-child(2) { animation-delay: 0.16s; }
+.loading-dot:nth-child(3) { animation-delay: 0.32s; }
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: scale(0.4); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--text); color: #fff;
+  padding: 12px 24px; border-radius: 50px;
+  font-size: 0.9rem; font-weight: 600;
+  z-index: 200; opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* ===== RESPONSIVE ===== */
+@media (min-width: 481px) {
+  .app-container { border-radius: 24px; margin: 20px auto; min-height: calc(100dvh - 40px); box-shadow: var(--shadow-lg); }
+  .page { padding: 40px 32px 48px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-container" id="app">
+
+  <!-- ===== COVER PAGE ===== -->
+  <div class="page active" id="page-cover">
+    <div class="cover-emoji-group">💼😮‍💨☕</div>
+    <h1 class="cover-title">测测你的打工魂</h1>
+    <p class="cover-subtitle">10道题，测出职场隐藏人格</p>
+    <div class="cover-participants">
+      <span>🔥</span>
+      <span>已有 <span class="count" id="participant-count">--</span> 人参与测试</span>
+    </div>
+    <button class="btn-start" id="btn-start">⚡ 开始测试</button>
+  </div>
+
+  <!-- ===== QUIZ PAGE ===== -->
+  <div class="page" id="page-quiz">
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:10%"></div></div>
+      <span class="progress-text" id="progress-text">1/10</span>
+    </div>
+    <div class="quiz-emoji" id="quiz-emoji"></div>
+    <div class="quiz-question" id="quiz-question"></div>
+    <div class="quiz-options" id="quiz-options"></div>
+  </div>
+
+  <!-- ===== RESULT PAGE ===== -->
+  <div class="page" id="page-result">
+    <div class="result-emoji" id="result-emoji"></div>
+    <h2 class="result-type" id="result-type"></h2>
+    <p class="result-desc" id="result-desc"></p>
+    <div class="result-tags" id="result-tags"></div>
+    <div class="result-actions">
+      <button class="btn-action btn-primary" id="btn-share">🎨 生成分享海报</button>
+      <button class="btn-action btn-secondary" id="btn-ranking">📊 查看排行榜</button>
+      <button class="btn-action btn-outline" id="btn-comment-page">💬 留下评论</button>
+    </div>
+    <button class="btn-action btn-secondary" id="btn-retry" style="margin-top:8px;">🔄 再测一次</button>
+  </div>
+
+  <!-- ===== RANKING PAGE ===== -->
+  <div class="page" id="page-ranking">
+    <button class="back-btn" id="btn-ranking-back">← 返回</button>
+    <h2 class="ranking-title">🏆 打工魂排行榜</h2>
+    <p class="ranking-subtitle" id="ranking-total">共有 -- 人参与</p>
+    <div class="ranking-list" id="ranking-list"></div>
+  </div>
+
+  <!-- ===== COMMENT PAGE ===== -->
+  <div class="page" id="page-comment">
+    <button class="back-btn" id="btn-comment-back">← 返回</button>
+    <h2 class="comment-title">💬 打工魂留言板</h2>
+    <div class="comment-list" id="comment-list"></div>
+    <div class="comment-input-wrap">
+      <input class="comment-input" id="comment-input" placeholder="分享你的打工魂感悟..." maxlength="200">
+      <button class="btn-comment" id="btn-send-comment">发布</button>
+    </div>
+  </div>
+
+  <!-- ===== POSTER OVERLAY ===== -->
+  <div class="poster-overlay" id="poster-overlay">
+    <div class="poster-card">
+      <canvas id="poster-canvas" width="600" height="900"></canvas>
+      <div class="poster-actions">
+        <button class="poster-close" id="btn-poster-close">关闭</button>
+        <button class="btn-primary" id="btn-save-poster">💾 保存图片</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+// ==================== SUPABASE CONFIG ====================
+// TODO: 替换为你的 Supabase 项目 URL 和 anon key
+const SUPABASE_URL = 'https://guhotxwcwijjhfuwmsbz.supabase.co/rest/v1/';
+const SUPABASE_KEY = 'sb_publishable_n7_tjGb7ZSjqZR8Epf31tA_2gZMIN2c';
+let supabase = null;
+
+function initSupabase() {
+  if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+    console.warn('Supabase 未配置，排行榜和评论功能暂不可用');
+    return false;
+  }
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    return true;
+  } catch (e) {
+    console.error('Supabase 初始化失败:', e);
+    return false;
+  }
+}
+
+// ==================== DATA ====================
+const SOUL_TYPES = [
+  { id: 1,  name: '卷王之王',        emoji: '🏆', desc: '你的人生信条是：只要卷不死，就往死里卷。凌晨两点的办公室，是你最熟悉的风景。', tags: ['内卷', '加班', '奋斗逼'] },
+  { id: 2,  name: '摸鱼大师',        emoji: '🐟', desc: '带薪摸鱼是你的核心竞争力。你有一百种方法让老板觉得你很忙，实际上你在刷手机。', tags: ['摸鱼', '划水', '时间管理'] },
+  { id: 3,  name: 'PPT 战神',        emoji: '📊', desc: '你做的PPT比老板的人生规划还完整。精美的动画、完美的排版，虽然内容可能没什么用。', tags: ['PPT', '汇报', '美化'] },
+  { id: 4,  name: '甩锅达人',        emoji: '🍳', desc: '锅从不落地，因为你接不住。你的甩锅技巧出神入化，每个同事都被你甩锅过。', tags: ['甩锅', '推责', '生存法则'] },
+  { id: 5,  name: '会议影帝',        emoji: '🎭', desc: '开会时的表情管理比流量明星还专业。明明在发呆，却能点头点出深以为然的效果。', tags: ['开会', '演技', '表情管理'] },
+  { id: 6,  name: '带薪拉屎专员',    emoji: '🚽', desc: '厕所是你的第二工位。你深谙"带薪拉屎"的精髓，每天至少为公司厕所贡献30分钟。', tags: ['厕所', '带薪', '养生'] },
+  { id: 7,  name: '职场社恐',        emoji: '😰', desc: '团建对你来说比述职还可怕。电梯里遇到同事，你宁愿假装看手机也不打招呼。', tags: ['社恐', '独处', '安静'] },
+  { id: 8,  name: '画饼艺术家',      emoji: '🎨', desc: '你画的饼，老板都自愧不如。"明年一定涨薪""下个季度就升职"——你说这些的时候自己都差点信了。', tags: ['画饼', '忽悠', '乐观'] },
+  { id: 9,  name: '咖啡成精',        emoji: '☕', desc: '血液里流淌的不是血，是美式。没有咖啡的早晨，你就像没有油的机器——完全转不动。', tags: ['咖啡', '续命', '提神'] },
+  { id: 10, name: '干饭积极分子',    emoji: '🍚', desc: '每到饭点，你是部门第一个站起来的人。"人是铁饭是钢"是你的座右铭，没有什么比干饭更重要。', tags: ['干饭', '美食', '快乐'] },
+  { id: 11, name: '隐形卷王',        emoji: '👻', desc: '嘴上说着躺平，下班偷偷加班。你总在同事面前假装不在乎，然后默默把活全干了。', tags: ['伪装', '低调', '暗中努力'] },
+  { id: 12, name: '摸鱼鉴察员',      emoji: '🔍', desc: '你对同事的上班状态了如指掌。谁在摸鱼、谁在带薪拉屎、谁在刷淘宝，都逃不过你的法眼。', tags: ['观察', '情报', '八卦'] },
+  { id: 13, name: '职场甜心',        emoji: '💖', desc: '靠可爱在职场生存，全公司都宠你。帮忙带杯咖啡、替人拿个快递，你的人缘好到让人嫉妒。', tags: ['可爱', '人缘', '团宠'] },
+  { id: 14, name: '反卷先锋',        emoji: '✊', desc: '谁卷你骂谁，准时下班是你的底线。你坚信工作是生活的手段，不是生活的全部。', tags: ['反卷', '平衡', '清醒'] },
+  { id: 15, name: '方案缝合怪',      emoji: '🧵', desc: '一个方案=七个方案缝合，甲方都无法拒绝。你的创造力和拼接能力达到了令人发指的程度。', tags: ['缝合', '创意', '多面手'] },
+  { id: 16, name: '打工魂觉醒了',    emoji: '⚡', desc: '你不是在打工，你是在渡劫。但渡劫渡到一半突然觉醒了——打工只是过程，自由才是终点。', tags: ['觉醒', '通透', '自由'] },
+];
+
+// 每道题的选项映射：[问题文本, [选项目录], 每题专属emoji]
+// options: [选项文本, [倾向的类型ID列表]]
+const QUESTIONS = [
+  {
+    q: '早上闹钟响了，你的第一反应是？',
+    emoji: '⏰',
+    options: [
+      ['立刻起床，绝不赖床', [1, 11]],       // 卷王/隐形卷王
+      ['再睡5分钟，就5分钟', [2, 12]],       // 摸鱼大师/鉴察员
+      ['关掉闹钟，继续睡', [6, 14]],          // 带薪拉屎/反卷
+      ['闹钟？我早就在公司了', [1, 3]],       // 卷王/PPT战神
+    ]
+  },
+  {
+    q: '老板突然@你，你的第一反应？',
+    emoji: '💬',
+    options: [
+      ['秒回，立刻响应', [1, 13]],            // 卷王/职场甜心
+      ['先看内容，再决定回不回', [4, 12]],    // 甩锅/鉴察员
+      ['假装没看到，等下再说', [2, 14]],      // 摸鱼/反卷
+      ['已经在老板办公室了', [5, 16]],        // 会议影帝/觉醒
+    ]
+  },
+  {
+    q: '开会时的标准姿势？',
+    emoji: '📋',
+    options: [
+      ['认真记笔记，重点不落下', [3, 11]],    // PPT战神/隐形卷王
+      ['眼神发呆，但频频点头', [2, 5]],       // 摸鱼大师/会议影帝
+      ['悄悄玩手机', [12, 14]],               // 鉴察员/反卷
+      ['你主持，全场听你的', [8, 15]],        // 画饼/缝合怪
+    ]
+  },
+  {
+    q: '同事找你帮忙，你通常？',
+    emoji: '🤝',
+    options: [
+      ['立刻答应，热情帮忙', [13, 10]],       // 甜心/干饭积极分子
+      ['先问什么事，再决定帮不帮', [4, 12]],  // 甩锅/鉴察员
+      ['假装很忙，回避一下', [2, 7]],         // 摸鱼/社恐
+      ['主动发现需求，提前帮忙', [1, 15]],    // 卷王/缝合怪
+    ]
+  },
+  {
+    q: '下班前5分钟，你在做什么？',
+    emoji: '🕔',
+    options: [
+      ['收拾东西，准备冲刺', [14, 10]],       // 反卷/干饭
+      ['工作还没做完，再赶一会', [11, 3]],    // 隐形卷王/PPT战神
+      ['已经在电梯里了', [2, 6]],             // 摸鱼/带薪拉屎
+      ['主动加班，今日事今日毕', [1, 16]],    // 卷王/觉醒
+    ]
+  },
+  {
+    q: '周五下午的心情？',
+    emoji: '🎉',
+    options: [
+      ['心早已飞到周末了', [10, 14]],         // 干饭/反卷
+      ['还行，就正常上班', [2, 7]],           // 摸鱼/社恐
+      ['什么？今天已经周五了吗？', [1, 11]],  // 卷王/隐形卷王
+      ['周末是什么？工作使我快乐', [16, 3]],  // 觉醒/PPT战神
+    ]
+  },
+  {
+    q: '遇到职场甩锅，你的反应是？',
+    emoji: '🍳',
+    options: [
+      ['默默接住，不解释', [13, 7]],          // 甜心/社恐
+      ['巧妙甩回去，让对方吃瘪', [4, 12]],    // 甩锅/鉴察员
+      ['当场揭穿，正面硬刚', [14, 16]],       // 反卷/觉醒
+      ['锅还没到，你已提前感知并规避', [5, 8]], // 影帝/画饼
+    ]
+  },
+  {
+    q: '团建对你来说是什么？',
+    emoji: '🎯',
+    options: [
+      ['社交好机会，开心参加', [13, 8]],      // 甜心/画饼
+      ['能不去就不去，找理由请假', [2, 7]],   // 摸鱼/社恐
+      ['纯纯的折磨，为什么要去', [6, 14]],    // 带薪拉屎/反卷
+      ['你组织的，流程都是你定的', [5, 15]],  // 影帝/缝合怪
+    ]
+  },
+  {
+    q: '午休时间你通常在干嘛？',
+    emoji: '🍱',
+    options: [
+      ['认真吃饭，享受美食', [10, 13]],        // 干饭/甜心
+      ['抓紧时间睡觉补觉', [2, 6]],           // 摸鱼/带薪拉屎
+      ['刷手机，看剧看综艺', [12, 14]],       // 鉴察员/反卷
+      ['还在工作，午休是什么', [1, 11]],      // 卷王/隐形卷王
+    ]
+  },
+  {
+    q: '你觉得自己是什么样的打工人？',
+    emoji: '🪞',
+    options: [
+      ['普通打工人，混口饭吃', [7, 2]],       // 社恐/摸鱼
+      ['潜力股，未来可期', [11, 15]],         // 隐形卷王/缝合怪
+      ['废柴本柴，全靠演技', [6, 12]],        // 带薪拉屎/鉴察员
+      ['卷王本王，不卷不舒服', [1, 16]],      // 卷王/觉醒
+    ]
+  },
+];
+
+// 每个 emoji 对应的每题中的选项映射到类型的辅助
+const QUIZ_EMOJIS = ['⏰','💬','📋','🤝','🕔','🎉','🍳','🎯','🍱','🪞'];
+
+// ==================== STATE ====================
+let currentPage = 'cover';
+let currentQuestion = 0;
+let scores = new Array(17).fill(0); // index 1-16
+let userResultType = null;
+let userNickname = '';
+
+// ==================== UTILS ====================
+function showPage(pageName) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-' + pageName);
+  if (target) {
+    target.classList.add('active');
+    currentPage = pageName;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function generateNickname() {
+  const prefixes = ['打工', '搬砖', '摸鱼', '划水', '躺平', '加班', '带薪', '奋斗', '快乐', '暴躁'];
+  const suffixes = ['人', '选手', '大师', '小能手', '侠', '仔', '君', '星人', '战士', '达人'];
+  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+  const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+  return prefix + suffix + Math.floor(Math.random() * 100);
+}
+
+// 防重复提交（5分钟内）
+function canSubmit() {
+  const lastSubmit = localStorage.getItem('dagonghun_last_submit');
+  if (!lastSubmit) return true;
+  return Date.now() - parseInt(lastSubmit) > 5 * 60 * 1000;
+}
+
+function markSubmitted() {
+  localStorage.setItem('dagonghun_last_submit', Date.now().toString());
+}
+
+function saveResult(typeId) {
+  localStorage.setItem('dagonghun_result', typeId.toString());
+  localStorage.setItem('dagonghun_nickname', userNickname);
+}
+
+function loadSavedResult() {
+  const r = localStorage.getItem('dagonghun_result');
+  const n = localStorage.getItem('dagonghun_nickname');
+  if (r && n) {
+    userResultType = parseInt(r);
+    userNickname = n;
+    return true;
+  }
+  return false;
+}
+
+// ==================== API (Supabase) ====================
+async function apiGetParticipantCount() {
+  if (!supabase) return 0;
+  try {
+    const { count, error } = await supabase
+      .from('results')
+      .select('*', { count: 'exact', head: true });
+    if (error) throw error;
+    // Add a base number so it looks populated
+    return (count || 0) + 128;
+  } catch (e) {
+    console.error('获取参与人数失败:', e);
+    return 128;
+  }
+}
+
+async function apiSubmitResult(typeId) {
+  if (!supabase || !canSubmit()) return false;
+  try {
+    const { error } = await supabase
+      .from('results')
+      .insert([{ result_type: typeId }]);
+    if (error) throw error;
+    markSubmitted();
+    return true;
+  } catch (e) {
+    console.error('提交结果失败:', e);
+    // 本地存储兜底
+    return false;
+  }
+}
+
+async function apiGetRanking() {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .from('results')
+      .select('result_type');
+    if (error) throw error;
+    return data || [];
+  } catch (e) {
+    console.error('获取排行榜失败:', e);
+    return [];
+  }
+}
+
+async function apiGetComments() {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .from('comments')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    return data || [];
+  } catch (e) {
+    console.error('获取评论失败:', e);
+    return [];
+  }
+}
+
+async function apiAddComment(nickname, resultType, content) {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase
+      .from('comments')
+      .insert([{ nickname, result_type: resultType, content }]);
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    console.error('添加评论失败:', e);
+    return false;
+  }
+}
+
+// ==================== RENDER ====================
+function renderCover() {
+  apiGetParticipantCount().then(count => {
+    document.getElementById('participant-count').textContent = count;
+  }).catch(() => {
+    document.getElementById('participant-count').textContent = '128';
+  });
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[currentQuestion];
+  document.getElementById('quiz-emoji').textContent = q.emoji;
+  document.getElementById('quiz-question').textContent = q.q;
+  document.getElementById('progress-text').textContent = (currentQuestion + 1) + '/10';
+  document.getElementById('progress-fill').style.width = ((currentQuestion + 1) * 10) + '%';
+
+  const container = document.getElementById('quiz-options');
+  container.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+
+  q.options.forEach((opt, idx) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-option';
+    div.innerHTML = '<span class="quiz-option-letter">' + letters[idx] + '</span>' + opt[0];
+    div.addEventListener('click', () => selectOption(idx));
+    container.appendChild(div);
+  });
+}
+
+function selectOption(idx) {
+  const selectedTypes = QUESTIONS[currentQuestion].options[idx][1];
+  selectedTypes.forEach(t => scores[t]++);
+
+  const options = document.querySelectorAll('.quiz-option');
+  options.forEach(o => o.classList.remove('selected'));
+  options[idx].classList.add('selected');
+
+  setTimeout(() => {
+    if (currentQuestion < 9) {
+      currentQuestion++;
+      renderQuestion();
+    } else {
+      finishQuiz();
+    }
+  }, 350);
+}
+
+function finishQuiz() {
+  // Find the type with highest score
+  let maxScore = -1;
+  let bestTypes = [];
+  for (let i = 1; i <= 16; i++) {
+    if (scores[i] > maxScore) {
+      maxScore = scores[i];
+      bestTypes = [i];
+    } else if (scores[i] === maxScore) {
+      bestTypes.push(i);
+    }
+  }
+  // Random if tie
+  const finalType = bestTypes[Math.floor(Math.random() * bestTypes.length)];
+  userResultType = finalType;
+  userNickname = generateNickname();
+  saveResult(finalType);
+
+  const soul = SOUL_TYPES[finalType - 1];
+  document.getElementById('result-emoji').textContent = soul.emoji;
+  document.getElementById('result-type').textContent = '你的打工魂：' + soul.name;
+  document.getElementById('result-desc').textContent = soul.desc;
+  const tagsDiv = document.getElementById('result-tags');
+  tagsDiv.innerHTML = soul.tags.map(t => '<span class="result-tag">#' + t + '</span>').join('');
+  document.getElementById('result-emoji').style.animation = 'none';
+  void document.getElementById('result-emoji').offsetWidth;
+  document.getElementById('result-emoji').style.animation = 'resultPop 0.6s cubic-bezier(0.34,1.56,0.64,1) both';
+
+  showPage('result');
+
+  // Submit to backend
+  apiSubmitResult(finalType).then(() => {
+    apiGetParticipantCount().then(count => {
+      document.getElementById('participant-count').textContent = count;
+    });
+  });
+}
+
+async function renderRanking() {
+  const results = await apiGetRanking();
+
+  // Count by type
+  const counts = new Array(17).fill(0);
+  let total = 0;
+  results.forEach(r => {
+    if (r.result_type >= 1 && r.result_type <= 16) {
+      counts[r.result_type]++;
+      total++;
+    }
+  });
+
+  // Sort by count desc
+  const ranked = SOUL_TYPES.map(s => ({
+    ...s,
+    count: counts[s.id] || 0,
+    pct: total > 0 ? Math.round((counts[s.id] || 0) / total * 100) : 0,
+  })).sort((a, b) => b.count - a.count || a.id - b.id);
+
+  document.getElementById('ranking-total').textContent = '共有 ' + (total || '--') + ' 人参与';
+
+  const container = document.getElementById('ranking-list');
+  container.innerHTML = ranked.map((s, idx) => {
+    const isYou = userResultType === s.id;
+    return `
+      <div class="ranking-item${isYou ? ' is-you' : ''}">
+        <span class="ranking-rank">${idx + 1}</span>
+        <span class="ranking-emoji">${s.emoji}</span>
+        <span class="ranking-name">${s.name}</span>
+        <div class="ranking-bar-wrap"><div class="ranking-bar" style="width:${Math.max(s.pct, 3)}%"></div></div>
+        <span class="ranking-pct">${s.pct}%</span>
+      </div>
+    `;
+  }).join('');
+}
+
+async function renderComments() {
+  const comments = await apiGetComments();
+  const container = document.getElementById('comment-list');
+
+  if (comments.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-emoji">💭</div>
+        <p>还没有评论，来做第一个留言的人吧！</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = comments.map(c => {
+    const soul = SOUL_TYPES.find(s => s.id === c.result_type);
+    return `
+      <div class="comment-item">
+        <div class="comment-header">
+          <span class="comment-nickname">${escapeHtml(c.nickname)}</span>
+          <span class="comment-type-tag">${soul ? soul.emoji + ' ' + soul.name : '未知'}</span>
+        </div>
+        <div class="comment-body">${escapeHtml(c.content)}</div>
+      </div>`;
+  }).join('');
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ==================== POSTER ====================
+function generatePoster() {
+  const soul = SOUL_TYPES[userResultType - 1];
+  const overlay = document.getElementById('poster-overlay');
+  const canvas = document.getElementById('poster-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 600, H = 900;
+
+  // Clear
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#FFF8F0');
+  bgGrad.addColorStop(0.5, '#FFF1E0');
+  bgGrad.addColorStop(1, '#FFE8D6');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Decorative circles
+  ctx.fillStyle = 'rgba(255,107,53,0.08)';
+  ctx.beginPath(); ctx.arc(500, 120, 160, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(80, 700, 200, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,210,63,0.12)';
+  ctx.beginPath(); ctx.arc(100, 200, 100, 0, Math.PI*2); ctx.fill();
+
+  // Title
+  ctx.fillStyle = '#2D2420';
+  ctx.font = 'bold 40px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('测测你的打工魂', W/2, 80);
+
+  // Emoji
+  ctx.font = '100px sans-serif';
+  ctx.fillText(soul.emoji, W/2, 210);
+
+  // Type name
+  ctx.font = 'bold 52px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle = '#FF6B35';
+  ctx.fillText(soul.name, W/2, 300);
+
+  // Divider
+  ctx.strokeStyle = '#FFD23F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(150, 330);
+  ctx.lineTo(450, 330);
+  ctx.stroke();
+
+  // Description
+  ctx.fillStyle = '#7A6E66';
+  ctx.font = '22px "PingFang SC","Microsoft YaHei",sans-serif';
+  const descLines = wrapText(ctx, soul.desc, 420);
+  descLines.forEach((line, i) => {
+    ctx.fillText(line, W/2, 380 + i * 36);
+  });
+
+  // Tags
+  const tagY = 380 + descLines.length * 36 + 30;
+  ctx.font = 'bold 20px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillStyle = '#FF6B35';
+  let tagX = W/2 - (soul.tags.length * 100) / 2 + 50;
+  soul.tags.forEach(tag => {
+    ctx.fillStyle = '#FFF1E0';
+    ctx.beginPath();
+    const tw = ctx.measureText('#' + tag).width + 30;
+    roundRect(ctx, tagX - tw/2, tagY - 16, tw, 36, 50);
+    ctx.fill();
+    ctx.fillStyle = '#FF6B35';
+    ctx.fillText('#' + tag, tagX, tagY + 10);
+    tagX += tw + 20;
+  });
+
+  // Bottom section
+  const bottomY = tagY + 80;
+  ctx.fillStyle = '#FF6B35';
+  ctx.font = 'bold 24px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('扫码测测你的打工魂', W/2, bottomY);
+
+  // QR code placeholder
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(W/2 - 60, bottomY + 20, 120, 120);
+  ctx.fillStyle = '#FF6B35';
+  ctx.font = '14px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText('二维码占位', W/2, bottomY + 85);
+
+  overlay.classList.add('show');
+}
+
+function wrapText(ctx, text, maxWidth) {
+  const lines = [];
+  let current = '';
+  for (const char of text) {
+    const test = current + char;
+    if (ctx.measureText(test).width > maxWidth && current.length > 0) {
+      lines.push(current);
+      current = char;
+    } else {
+      current = test;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function savePoster() {
+  const canvas = document.getElementById('poster-canvas');
+  const link = document.createElement('a');
+  link.download = '我的打工魂.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('海报已保存！');
+}
+
+// ==================== EVENT BINDINGS ====================
+document.getElementById('btn-start').addEventListener('click', () => {
+  currentQuestion = 0;
+  scores = new Array(17).fill(0);
+  userResultType = null;
+  renderQuestion();
+  showPage('quiz');
+});
+
+document.getElementById('btn-share').addEventListener('click', generatePoster);
+document.getElementById('btn-ranking').addEventListener('click', () => {
+  renderRanking();
+  showPage('ranking');
+});
+document.getElementById('btn-comment-page').addEventListener('click', () => {
+  renderComments();
+  showPage('comment');
+});
+document.getElementById('btn-retry').addEventListener('click', () => {
+  currentQuestion = 0;
+  scores = new Array(17).fill(0);
+  userResultType = null;
+  renderQuestion();
+  showPage('quiz');
+});
+
+document.getElementById('btn-ranking-back').addEventListener('click', () => showPage('result'));
+document.getElementById('btn-comment-back').addEventListener('click', () => showPage('result'));
+
+document.getElementById('btn-poster-close').addEventListener('click', () => {
+  document.getElementById('poster-overlay').classList.remove('show');
+});
+document.getElementById('btn-save-poster').addEventListener('click', savePoster);
+
+document.getElementById('btn-send-comment').addEventListener('click', async () => {
+  const input = document.getElementById('comment-input');
+  const content = input.value.trim();
+  if (!content) return;
+
+  const btn = document.getElementById('btn-send-comment');
+  btn.disabled = true;
+  btn.textContent = '发送中...';
+
+  let nickname = userNickname;
+  if (!nickname) {
+    const saved = localStorage.getItem('dagonghun_nickname');
+    nickname = saved || generateNickname();
+    userNickname = nickname;
+  }
+
+  const success = await apiAddComment(nickname, userResultType || 1, content);
+  if (success || !supabase) {
+    input.value = '';
+    await renderComments();
+    showToast('评论发布成功！');
+  } else {
+    showToast('发布失败，请稍后重试');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '发布';
+});
+
+// Enter key to send comment
+document.getElementById('comment-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('btn-send-comment').click();
+  }
+});
+
+// ==================== INIT ====================
+function init() {
+  initSupabase();
+  renderCover();
+
+  // Check if user already has a result (coming back)
+  if (loadSavedResult()) {
+    const soul = SOUL_TYPES[userResultType - 1];
+    document.getElementById('result-emoji').textContent = soul.emoji;
+    document.getElementById('result-type').textContent = '你的打工魂：' + soul.name;
+    document.getElementById('result-desc').textContent = soul.desc;
+    document.getElementById('result-tags').innerHTML = soul.tags.map(t => '<span class="result-tag">#' + t + '</span>').join('');
+  }
+}
+
+init();
+</script>
+</body>
+</html>
